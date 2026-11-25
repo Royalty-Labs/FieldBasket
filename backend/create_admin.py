@@ -8,7 +8,7 @@ from app.models import User
 
 
 def main():
-    print("FarmLink Ekiti — Create Administrator")
+    print("FieldBasket — Create Administrator")
     full_name = input("Administrator full name: ").strip()
     email = input("Administrator email: ").strip().lower()
     password = getpass("Administrator password (hidden): ")
