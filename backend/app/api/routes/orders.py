@@ -10,6 +10,7 @@ from app.api.deps import require_role
 from app.db.session import get_db
 from app.models import FarmerProfile, Order, Product, User
 from app.schemas.order import (
+    CheckoutRequest,
     OrderCreate,
     OrderResponse,
     OrderStatusUpdate,
@@ -127,6 +128,130 @@ def create_order(
         ) from None
 
     return order
+
+
+def _format_quantity(value: Decimal) -> str:
+    return f"{value.normalize():f}"
+
+
+@router.post(
+    "/checkout",
+    response_model=list[OrderResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+def checkout(
+    data: CheckoutRequest,
+    current_user: User = Depends(require_role("buyer")),
+    db: Session = Depends(get_db),
+) -> list[Order]:
+    """Place a whole basket at once: one order per item, all or nothing.
+
+    Each farm still receives and answers its own order. If any item can
+    no longer be supplied, nothing is ordered and no stock is reserved.
+    """
+    product_ids = [item.product_id for item in data.items]
+
+    products = {
+        product.id: product
+        for product in db.scalars(
+            select(Product)
+            .join(FarmerProfile, FarmerProfile.user_id == Product.seller_id)
+            .where(
+                Product.id.in_(product_ids),
+                Product.is_available.is_(True),
+                Product.quantity_available > Decimal("0"),
+                FarmerProfile.verification_status == "approved",
+            )
+        )
+    }
+
+    unavailable = [pid for pid in product_ids if pid not in products]
+    if unavailable:
+        names = db.scalars(
+            select(Product.name).where(Product.id.in_(unavailable))
+        ).all()
+        listed = ", ".join(names) if names else "Some items"
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"{listed} {'is' if len(names) == 1 else 'are'} no longer "
+                "available. Remove it from your basket and try again."
+            ),
+        )
+
+    orders: list[Order] = []
+
+    try:
+        for item in data.items:
+            product = products[item.product_id]
+
+            if item.quantity > product.quantity_available:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"Only {_format_quantity(product.quantity_available)} "
+                        f"{product.unit} of {product.name} left. "
+                        "Lower the quantity and try again."
+                    ),
+                )
+
+            # Reserve stock with a guarded update, as for single orders.
+            reserved = db.execute(
+                update(Product)
+                .where(
+                    Product.id == product.id,
+                    Product.is_available.is_(True),
+                    Product.quantity_available >= item.quantity,
+                )
+                .values(
+                    quantity_available=Product.quantity_available - item.quantity,
+                    updated_at=func.now(),
+                )
+            )
+            if reserved.rowcount != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"The stock of {product.name} just changed. "
+                        "Check your basket and try again."
+                    ),
+                )
+
+            orders.append(
+                Order(
+                    buyer_id=current_user.id,
+                    farmer_id=product.seller_id,
+                    product_id=product.id,
+                    product_name=product.name,
+                    unit=product.unit,
+                    quantity=item.quantity,
+                    unit_price=product.price_per_unit,
+                    total_price=(product.price_per_unit * item.quantity).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    ),
+                    delivery_address=data.delivery_address,
+                    buyer_note=data.buyer_note,
+                    status="pending",
+                )
+            )
+
+        db.add_all(orders)
+        db.commit()
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Your basket could not be ordered. Please try again.",
+        ) from None
+
+    for order in orders:
+        db.refresh(order)
+
+    return orders
 
 
 @router.get(
