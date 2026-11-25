@@ -5,7 +5,7 @@ import type { User } from "../types";
 import { AuthContext, type AuthContextValue } from "./authContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<{ user: User | null; ready: boolean }>(() => ({
+  const [state, setState] = useState<{ user: User | null; ready: boolean; signedOut?: boolean }>(() => ({
     user: null,
     ready: !getToken(),
   }));
@@ -44,11 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => {
     clearToken();
-    setState({ user: null, ready: true });
+    setState({ user: null, ready: true, signedOut: true });
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user: state.user, ready: state.ready, signIn, signUp, signOut }),
+    () => ({ user: state.user, ready: state.ready, signedOut: Boolean(state.signedOut), signIn, signUp, signOut }),
     [state, signIn, signUp, signOut],
   );
 

@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Link, useLocation } from "react-router";
 import * as api from "../../api/endpoints";
 import { EmptyState, Notice, PageLoader } from "../../components/Feedback";
-import { OrderTimeline, StatusText } from "../../components/OrderParts";
+import { OrderTimeline, PaymentBadge, StatusText } from "../../components/OrderParts";
 import { ACTIVE_ORDER_STATUSES, naira, orderRef, quantity, shortDate } from "../../lib/format";
 import { errorMessage, useApi } from "../../lib/useApi";
 import type { Order } from "../../types";
@@ -16,11 +16,15 @@ export default function Orders() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const active = orders?.filter((o) => ACTIVE_ORDER_STATUSES.includes(o.status)) ?? [];
+  const unpaid = orders?.filter((o) => o.payment_status === "awaiting") ?? [];
+  const unpaidRefs = [...new Set(unpaid.map((o) => o.checkout_reference).filter(Boolean))] as string[];
+  const active =
+    orders?.filter((o) => o.payment_status !== "awaiting" && ACTIVE_ORDER_STATUSES.includes(o.status)) ?? [];
   const past = orders?.filter((o) => !ACTIVE_ORDER_STATUSES.includes(o.status)) ?? [];
 
   async function act(order: Order, status: "cancelled" | "completed") {
-    if (status === "cancelled" && !window.confirm(`Cancel your order for ${order.product_name}?`)) return;
+    const refundNote = order.payment_status === "paid" ? " You'll be refunded for it." : "";
+    if (status === "cancelled" && !window.confirm(`Cancel your order for ${order.product_name}?${refundNote}`)) return;
     setBusyId(order.id);
     setActionError(null);
     try {
@@ -56,6 +60,12 @@ export default function Orders() {
           </Notice>
         )}
         {(error || actionError) && <Notice tone="error">{error ?? actionError}</Notice>}
+        {unpaidRefs.map((ref) => (
+          <Notice key={ref} tone="warning">
+            Payment for order {ref} isn't finished yet. Its items are held for a short while.{" "}
+            <Link to={`/payment/return?reference=${encodeURIComponent(ref)}`}>Check payment</Link>
+          </Notice>
+        ))}
 
         {loading && !orders ? (
           <PageLoader label="Loading orders" />
@@ -79,7 +89,10 @@ export default function Orders() {
                         {order.farm_name ?? "Farm"} · {orderRef(order.id)}
                       </p>
                     </div>
-                    <span className="card__amount">{naira(order.total_price)}</span>
+                    <div className="card__aside">
+                      <span className="card__amount">{naira(order.total_price)}</span>
+                      <PaymentBadge order={order} />
+                    </div>
                   </div>
                   <div className="card__body">
                     <OrderTimeline order={order} />
@@ -123,6 +136,9 @@ export default function Orders() {
                 <span className="row__end">
                   <span className="row__title">{naira(order.total_price)}</span>
                   <StatusText order={order} />
+                  {(order.payment_status === "refunded" || order.payment_status === "refund_pending") && (
+                    <PaymentBadge order={order} />
+                  )}
                 </span>
               </li>
             ))}

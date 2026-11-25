@@ -1,7 +1,7 @@
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_role
 from app.db.session import get_db
 from app.models import FarmerProfile, User
+from app.services import messages
+from app.services.email import send_email
 from app.schemas.admin import (
     AdminFarmerProfileResponse,
     FarmerProfileReviewRequest,
@@ -46,6 +48,7 @@ def list_farmer_profiles(
 def review_farmer_profile(
     profile_id: UUID,
     data: FarmerProfileReviewRequest,
+    background: BackgroundTasks,
     current_admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ) -> FarmerProfile:
@@ -77,4 +80,14 @@ def review_farmer_profile(
             detail="The farmer profile could not be reviewed.",
         ) from None
 
+    background.add_task(
+        send_email,
+        messages.farmer_review_result(
+            profile.user.email,
+            profile.user.full_name,
+            profile.farm_name,
+            data.verification_status == "approved",
+            data.rejection_reason,
+        ),
+    )
     return profile

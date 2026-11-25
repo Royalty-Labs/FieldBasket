@@ -121,7 +121,8 @@ function SiteFooter() {
           <div>
             <span>Help</span>
             <Link to="/#faq">Questions</Link>
-            <Link to="/login">Sign in</Link>
+            <Link to="/terms">Terms of Use</Link>
+            <Link to="/privacy">Privacy Policy</Link>
           </div>
         </nav>
       </div>

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_role
 from app.db.session import get_db
 from app.models import FarmerProfile, User
+from app.services import messages
+from app.services.email import Email, send_all
 from app.schemas.farmer import (
     FarmerProfileCreate,
     FarmerProfileResponse,
@@ -19,6 +21,14 @@ REVIEWED_FIELDS = {"farm_name", "phone", "town", "address"}
 router = APIRouter(prefix="/farmers/me/profile", tags=["Farmer Profiles"])
 
 
+def _admin_alerts(db: Session, profile: FarmerProfile, owner: User) -> list[Email]:
+    admins = db.scalars(select(User.email).where(User.role == "admin", User.is_active.is_(True))).all()
+    return [
+        messages.admin_new_application(email, profile.farm_name, owner.full_name, profile.town, profile.phone)
+        for email in admins
+    ]
+
+
 @router.post(
     "",
     response_model=FarmerProfileResponse,
@@ -26,6 +36,7 @@ router = APIRouter(prefix="/farmers/me/profile", tags=["Farmer Profiles"])
 )
 def create_farmer_profile(
     data: FarmerProfileCreate,
+    background: BackgroundTasks,
     current_user: User = Depends(require_role("farmer")),
     db: Session = Depends(get_db),
 ) -> FarmerProfile:
@@ -63,6 +74,7 @@ def create_farmer_profile(
             detail="A farmer profile already exists for this account.",
         ) from None
 
+    background.add_task(send_all, _admin_alerts(db, profile, current_user))
     return profile
 
 
@@ -89,6 +101,7 @@ def get_my_farmer_profile(
 @router.patch("", response_model=FarmerProfileResponse)
 def update_my_farmer_profile(
     data: FarmerProfileUpdate,
+    background: BackgroundTasks,
     current_user: User = Depends(require_role("farmer")),
     db: Session = Depends(get_db),
 ) -> FarmerProfile:
@@ -136,4 +149,6 @@ def update_my_farmer_profile(
             detail="The farmer profile could not be updated.",
         ) from None
 
+    if needs_review:
+        background.add_task(send_all, _admin_alerts(db, profile, current_user))
     return profile

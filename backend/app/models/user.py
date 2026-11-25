@@ -38,6 +38,11 @@ class User(Base):
         nullable=False,
         default=False,
     )
+    # When the person agreed to the Terms and Privacy Policy (NDPA).
+    terms_accepted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

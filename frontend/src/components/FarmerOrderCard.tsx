@@ -4,7 +4,7 @@ import { naira, orderRef, quantity, timeAgo } from "../lib/format";
 import { errorMessage } from "../lib/useApi";
 import type { Order } from "../types";
 import { Notice } from "./Feedback";
-import { StatusText } from "./OrderParts";
+import { PaymentBadge, StatusText } from "./OrderParts";
 
 /** One incoming order with the actions the farmer can take next. */
 export function FarmerOrderCard({ order, onChanged }: { order: Order; onChanged: () => void }) {
@@ -32,11 +32,23 @@ export function FarmerOrderCard({ order, onChanged }: { order: Order; onChanged:
           <h3 className="card__title">
             {order.product_name} · {quantity(order.quantity)} {order.unit}
           </h3>
-          <p className="card__sub">{order.buyer_name ?? "Buyer"}</p>
-          <p className="card__sub">{order.delivery_address}</p>
+          <p className="card__sub">
+            {order.buyer_name ?? "Buyer"}
+            {order.buyer_phone && (
+              <>
+                {" · "}
+                <a href={`tel:${order.buyer_phone.replace(/[^+\d]/g, "")}`}>{order.buyer_phone}</a>
+              </>
+            )}
+          </p>
+          <p className="card__sub">
+            {order.delivery_zone_name ? `${order.delivery_zone_name}: ` : ""}
+            {order.delivery_address}
+          </p>
         </div>
         <div className="card__aside">
           <span className="card__amount">{naira(order.total_price)}</span>
+          <PaymentBadge order={order} />
           <span className="card__sub">{timeAgo(order.created_at)}</span>
         </div>
       </div>
@@ -60,6 +72,9 @@ export function FarmerOrderCard({ order, onChanged }: { order: Order; onChanged:
           <label htmlFor={`reason-${order.id}`} className="field__label">
             Reason the buyer will see
           </label>
+          {order.payment_status === "paid" && (
+            <p className="field__hint">The buyer has paid, so declining refunds them for this item.</p>
+          )}
           <textarea
             id={`reason-${order.id}`}
             className="input input--area"

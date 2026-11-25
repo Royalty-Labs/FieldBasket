@@ -2,6 +2,10 @@ import { ApiError, apiRequest, uploadProductImage } from "./client";
 import type {
   AdminFarmerProfile,
   AuthResponse,
+  CheckoutStart,
+  DeliveryZone,
+  PaymentProvider,
+  PaymentState,
   FarmerProfile,
   Order,
   OrderStatus,
@@ -25,7 +29,14 @@ export const register = (data: {
   email: string;
   password: string;
   role: Exclude<Role, "admin">;
+  accept_terms: boolean;
 }) => apiRequest<User>("/auth/register", json("POST", data));
+
+export const requestPasswordReset = (email: string) =>
+  apiRequest<{ detail: string }>("/auth/password-reset/request", json("POST", { email }));
+
+export const confirmPasswordReset = (token: string, password: string) =>
+  apiRequest<{ detail: string }>("/auth/password-reset/confirm", json("POST", { token, password }));
 
 export const getMe = () => apiRequest<User>("/auth/me");
 
@@ -41,18 +52,23 @@ export const listProducts = (params: { category?: string; search?: string } = {}
 export const getProduct = (id: string) => apiRequest<Product>(`/products/${id}`);
 
 // Orders
-export const placeOrder = (data: {
-  product_id: string;
-  quantity: string;
-  delivery_address: string;
-  buyer_note?: string | null;
-}) => apiRequest<Order>("/orders", json("POST", data));
-
 export const checkout = (data: {
   items: { product_id: string; quantity: string }[];
+  provider: PaymentProvider;
+  delivery_zone_id: string;
+  buyer_phone: string;
   delivery_address: string;
   buyer_note?: string | null;
-}) => apiRequest<Order[]>("/orders/checkout", json("POST", data));
+}) => apiRequest<CheckoutStart>("/orders/checkout", json("POST", data));
+
+// Payments and delivery
+export const listPaymentProviders = () =>
+  apiRequest<{ id: PaymentProvider; name: string }[]>("/payments/providers");
+export const getPayment = (reference: string) =>
+  apiRequest<PaymentState>(`/payments/${encodeURIComponent(reference)}`);
+export const verifyPayment = (reference: string) =>
+  apiRequest<PaymentState>(`/payments/${encodeURIComponent(reference)}/verify`, { method: "POST" });
+export const listDeliveryZones = () => apiRequest<DeliveryZone[]>("/delivery-zones");
 
 export const listMyOrders = () => apiRequest<Order[]>("/orders/mine");
 export const listFarmerOrders = () => apiRequest<Order[]>("/orders/farmer");
@@ -130,3 +146,23 @@ export const reviewFarmerApplication = (
     `/admin/farmer-profiles/${id}/review`,
     json("PATCH", { verification_status, rejection_reason: rejection_reason ?? null }),
   );
+
+export const listAdminOrders = (paymentStatus: "all" | "paid" | "refund_pending" | "refunded" = "all") =>
+  apiRequest<Order[]>(`/admin/orders?payment_status=${paymentStatus}`);
+export const markRefunded = (orderId: string) =>
+  apiRequest<Order>(`/admin/orders/${orderId}/refund-complete`, { method: "PATCH" });
+
+export type DeliveryZoneData = {
+  name: string;
+  description: string | null;
+  fee: string;
+  is_active: boolean;
+  sort_order: number;
+};
+export const listAllDeliveryZones = () => apiRequest<DeliveryZone[]>("/admin/delivery-zones");
+export const createDeliveryZone = (data: DeliveryZoneData) =>
+  apiRequest<DeliveryZone>("/admin/delivery-zones", json("POST", data));
+export const updateDeliveryZone = (id: string, data: Partial<DeliveryZoneData>) =>
+  apiRequest<DeliveryZone>(`/admin/delivery-zones/${id}`, json("PATCH", data));
+export const deleteDeliveryZone = (id: string) =>
+  apiRequest<void>(`/admin/delivery-zones/${id}`, { method: "DELETE" });

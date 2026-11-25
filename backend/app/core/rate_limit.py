@@ -46,3 +46,6 @@ class FailedLoginLimiter:
 
 
 login_limiter = FailedLoginLimiter()
+
+# Password-reset emails: at most 3 per email address every 15 minutes.
+reset_limiter = FailedLoginLimiter(max_failures=3)

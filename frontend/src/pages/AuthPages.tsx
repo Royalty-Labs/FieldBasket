@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
+import * as api from "../api/endpoints";
 import { homePathFor } from "../auth/authContext";
 import { useAuth } from "../auth/useAuth";
 import { Notice } from "../components/Feedback";
@@ -88,6 +89,9 @@ export function LoginPage() {
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
+        <Link to="/forgot-password" className="auth__forgot">
+          Forgot your password?
+        </Link>
         <button className="btn btn--lime btn--block" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}
         </button>
@@ -106,6 +110,7 @@ export function RegisterPage() {
   const [params] = useSearchParams();
   const [role, setRole] = useState<"buyer" | "farmer">(params.get("role") === "farmer" ? "farmer" : "buyer");
   const [form, setForm] = useState({ full_name: "", email: "", password: "" });
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -122,6 +127,7 @@ export function RegisterPage() {
         email: form.email.trim(),
         password: form.password,
         role,
+        accept_terms: agreed,
       });
       announceResumedAdd(resumePendingAdd(created));
       const fallback = created.role === "farmer" ? "/farm/profile" : homePathFor(created.role);
@@ -182,13 +188,157 @@ export function RegisterPage() {
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
-        <button className="btn btn--lime btn--block" disabled={busy}>
+        <label className="consent">
+          <input type="checkbox" required checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+          <span>
+            I agree to the{" "}
+            <Link to="/terms" target="_blank">Terms of Use</Link> and{" "}
+            <Link to="/privacy" target="_blank">Privacy Policy</Link>
+            {role === "farmer" ? ", including FieldBasket checking my farm details" : ""}.
+          </span>
+        </label>
+        <button className="btn btn--lime btn--block" disabled={busy || !agreed}>
           {busy ? "Creating account…" : "Create account"}
         </button>
       </form>
       <p className="auth__switch">
         Already have an account? <Link to="/login">Sign in</Link>
       </p>
+    </AuthFrame>
+  );
+}
+
+export function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await api.requestPasswordReset(email.trim());
+      setSent(true);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AuthFrame
+      title={sent ? "Check your email" : "Reset your password"}
+      lead={
+        sent
+          ? `If ${email.trim()} has a FieldBasket account, we've sent it a link to choose a new password. The link works for one hour.`
+          : "Enter the email you signed up with and we'll send you a reset link."
+      }
+    >
+      {sent ? (
+        <p className="auth__switch">
+          No email after a few minutes? Check spam, or <button className="link-button" onClick={() => setSent(false)}>try again</button>.
+        </p>
+      ) : (
+        <form className="form" onSubmit={handleSubmit}>
+          {error && <Notice tone="error">{error}</Notice>}
+          <TextField
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <button className="btn btn--lime btn--block" disabled={busy}>
+            {busy ? "Sending…" : "Send reset link"}
+          </button>
+        </form>
+      )}
+      <p className="auth__switch">
+        Remembered it? <Link to="/login">Sign in</Link>
+      </p>
+    </AuthFrame>
+  );
+}
+
+export function ResetPasswordPage() {
+  const [params] = useSearchParams();
+  const token = params.get("token") ?? "";
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (password !== confirm) {
+      setError("The two passwords don't match.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await api.confirmPasswordReset(token, password);
+      setDone(true);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!token) {
+    return (
+      <AuthFrame title="This link is incomplete" lead="Open the link from your email again, or ask for a new one.">
+        <Link to="/forgot-password" className="btn btn--lime btn--block">Get a new link</Link>
+      </AuthFrame>
+    );
+  }
+
+  return (
+    <AuthFrame
+      title={done ? "Password changed" : "Choose a new password"}
+      lead={done ? "You can now sign in with your new password." : "Use at least 8 characters."}
+    >
+      {done ? (
+        <Link to="/login" className="btn btn--lime btn--block">Sign in</Link>
+      ) : (
+        <form className="form" onSubmit={handleSubmit}>
+          {error && (
+            <Notice tone="error">
+              {error} {error.includes("expired") && <Link to="/forgot-password">Ask for a new link</Link>}
+            </Notice>
+          )}
+          <TextField
+            id="password"
+            label="New password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <TextField
+            id="confirm"
+            label="Repeat new password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          <button className="btn btn--lime btn--block" disabled={busy}>
+            {busy ? "Saving…" : "Save new password"}
+          </button>
+        </form>
+      )}
     </AuthFrame>
   );
 }

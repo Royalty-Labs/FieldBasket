@@ -1,10 +1,7 @@
 import { useCallback, useState } from "react";
-import { NavLink, useNavigate } from "react-router";
 import * as api from "../../api/endpoints";
-import { useAuth } from "../../auth/useAuth";
 import { EmptyState, Notice, PageLoader } from "../../components/Feedback";
 import { Icon } from "../../components/Icon";
-import { Logo } from "../../components/Logo";
 import { shortDate } from "../../lib/format";
 import { errorMessage, useApi } from "../../lib/useApi";
 import type { AdminFarmerProfile, VerificationStatus } from "../../types";
@@ -101,8 +98,6 @@ function ApplicationRow({ profile, onChanged }: { profile: AdminFarmerProfile; o
 }
 
 export default function Applications() {
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
   const [tab, setTab] = useState<VerificationStatus>("pending");
   const [search, setSearch] = useState("");
   const load = useCallback(() => api.listFarmerApplications(), []);
@@ -119,30 +114,7 @@ export default function Applications() {
   const count = (status: VerificationStatus) => all.filter((p) => p.verification_status === status).length;
 
   return (
-    <div className="admin">
-      <aside className="admin__side">
-        <div className="admin__brand">
-          <Logo size={26} />
-          <span className="admin__badge">Admin</span>
-        </div>
-        <nav aria-label="Admin" className="admin__nav">
-          <NavLink to="/admin" end className={({ isActive }) => `admin__link${isActive ? " is-active" : ""}`}>
-            <Icon name="farm" size={18} /> Farmer applications
-            {count("pending") > 0 && <span className="admin__count">{count("pending")}</span>}
-          </NavLink>
-        </nav>
-        <button
-          className="admin__link admin__signout"
-          onClick={() => {
-            signOut();
-            navigate("/", { replace: true });
-          }}
-        >
-          <Icon name="logout" size={18} /> Sign out
-        </button>
-      </aside>
-
-      <main className="admin__main">
+    <>
         <div className="admin__top">
           <h1 className="admin__title">Farmer applications</h1>
           <label className="search search--light">
@@ -198,7 +170,6 @@ export default function Applications() {
             </table>
           </div>
         )}
-      </main>
-    </div>
+    </>
   );
 }

@@ -8,8 +8,13 @@ import { FarmerShell, PlainShell } from "./layouts/AppLayouts";
 import { LegacyProductRedirect } from "./layouts/LegacyProductRedirect";
 import { SiteShell } from "./layouts/SiteShell";
 import Account from "./pages/Account";
+import { AdminShell } from "./layouts/AdminShell";
+import AdminOrders from "./pages/admin/AdminOrders";
 import Applications from "./pages/admin/Applications";
-import { LoginPage, RegisterPage } from "./pages/AuthPages";
+import DeliveryAreas from "./pages/admin/DeliveryAreas";
+import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from "./pages/AuthPages";
+import PaymentReturn from "./pages/buyer/PaymentReturn";
+import { PrivacyPage, TermsPage } from "./pages/Legal";
 import Basket from "./pages/buyer/Basket";
 import Orders from "./pages/buyer/Orders";
 import ProductDetail from "./pages/buyer/ProductDetail";
@@ -39,10 +44,15 @@ createRoot(document.getElementById("root")!).render(
               <Route path="basket" element={<RequireRole role="buyer"><Basket /></RequireRole>} />
               <Route path="orders" element={<RequireRole role="buyer"><Orders /></RequireRole>} />
               <Route path="account" element={<RequireRole role="buyer"><Account /></RequireRole>} />
+              <Route path="payment/return" element={<RequireRole role="buyer"><PaymentReturn /></RequireRole>} />
+              <Route path="terms" element={<TermsPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
             </Route>
 
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="shop/products/:productId" element={<LegacyProductRedirect />} />
 
             <Route element={<PlainShell />}>
@@ -57,7 +67,11 @@ createRoot(document.getElementById("root")!).render(
               <Route path="profile" element={<FarmProfile />} />
             </Route>
 
-            <Route path="admin" element={<RequireRole role="admin"><Applications /></RequireRole>} />
+            <Route path="admin" element={<RequireRole role="admin"><AdminShell /></RequireRole>}>
+              <Route index element={<Applications />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="delivery" element={<DeliveryAreas />} />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </UiProvider>

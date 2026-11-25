@@ -98,6 +98,14 @@ const FAQS = [
     a: "Yes. Add produce from any farms to one basket and check out once. Each farm receives and confirms its own part of your order, and you can follow each one under Orders.",
   },
   {
+    q: "How do I pay, and how does delivery work?",
+    a: "You pay online at checkout with Paystack or Interswitch (card, transfer or USSD). Choose your delivery area and its fee is added to your total. We bring your order to your door once the farms have it ready.",
+  },
+  {
+    q: "What if a farm can't supply something?",
+    a: "You only pay for what you get. If a farm declines an item, or you cancel before it's accepted, that item is refunded to you, and the delivery fee too if nothing else in the order goes ahead.",
+  },
+  {
     q: "Do I need to download an app?",
     a: "No. FieldBasket works in your phone's browser. You can add it to your home screen and open it like any other app, even on a weak connection.",
   },
@@ -184,7 +192,7 @@ export default function Home() {
             <li>
               <span className="steps__num">02</span>
               <span className="steps__title">Fill your basket</span>
-              <span className="steps__body">Add what you need from one farm or several, then check out once with your delivery address.</span>
+              <span className="steps__body">Add what you need from one farm or several, then pay once, securely, with delivery to your area.</span>
             </li>
             <li>
               <span className="steps__num">03</span>

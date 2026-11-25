@@ -45,3 +45,17 @@ export function StatusText({ order }: { order: Order }) {
     </span>
   );
 }
+
+const PAYMENT_TEXT: Partial<Record<Order["payment_status"], { label: string; tone: string }>> = {
+  awaiting: { label: "Payment not finished", tone: "pending" },
+  paid: { label: "Paid", tone: "completed" },
+  refund_pending: { label: "Refund on the way", tone: "accepted" },
+  refunded: { label: "Refunded", tone: "cancelled" },
+};
+
+/** Paid / refund state, for orders placed through online checkout. */
+export function PaymentBadge({ order }: { order: Order }) {
+  const text = PAYMENT_TEXT[order.payment_status];
+  if (!text) return null;
+  return <span className={`pay-badge pay-badge--${text.tone}`}>{text.label}</span>;
+}

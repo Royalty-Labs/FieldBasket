@@ -38,6 +38,11 @@ class Order(Base):
             "'ready_for_fulfillment', 'completed', 'cancelled')",
             name="ck_order_status_valid",
         ),
+        CheckConstraint(
+            "payment_status IN ('not_required', 'awaiting', 'paid', "
+            "'failed', 'refund_pending', 'refunded')",
+            name="ck_order_payment_status_valid",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -109,6 +114,26 @@ class Order(Base):
         server_default="pending",
     )
 
+    # Orders placed through a paid checkout. Older orders have none.
+    checkout_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("checkouts.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
+    # not_required (before online payment), awaiting, paid, failed,
+    # refund_pending or refunded.
+    payment_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="not_required",
+        server_default="not_required",
+    )
+    buyer_phone: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -121,6 +146,7 @@ class Order(Base):
         nullable=False,
     )
 
+    checkout: Mapped["Checkout | None"] = relationship(back_populates="orders")
     buyer: Mapped["User"] = relationship(foreign_keys=[buyer_id])
     farmer: Mapped["User"] = relationship(foreign_keys=[farmer_id])
 
@@ -136,3 +162,16 @@ class Order(Base):
             return None
         profile = self.farmer.farmer_profile
         return profile.farm_name if profile else self.farmer.full_name
+
+    @property
+    def delivery_zone_name(self) -> str | None:
+        return self.checkout.delivery_zone_name if self.checkout else None
+
+    @property
+    def checkout_reference(self) -> str | None:
+        return self.checkout.reference if self.checkout else None
+
+    @property
+    def visible_to_farmer(self) -> bool:
+        """Farmers only see orders that were paid in time (or need no payment)."""
+        return self.checkout is None or self.checkout.status == "paid"
