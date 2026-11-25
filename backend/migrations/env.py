@@ -9,7 +9,8 @@ from app import models  # noqa: F401 — registers all models with Base.metadata
 
 config = context.config
 
-if config.config_file_name is not None:
+# When the API runs migrations on start-up it keeps its own logging setup.
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
 # Use the same database URL as the application.

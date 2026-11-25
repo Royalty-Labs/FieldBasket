@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +19,8 @@ class Settings(BaseSettings):
     cloudinary_api_secret: str | None = None
 
     # Public address of the website, used in emails and payment redirects.
-    frontend_url: str = "http://localhost:5173"
+    # Optional: when blank, the first address in CORS_ORIGINS is used.
+    frontend_url: str | None = None
 
     # Email (SMTP). Emails are skipped, with a log line, until host and
     # sender are set. Works with Brevo, Mailgun, Zoho, Gmail and others.
@@ -38,8 +40,15 @@ class Settings(BaseSettings):
     interswitch_pay_url: str | None = None  # override the hosted page URL
     interswitch_requery_url: str | None = None  # override the status URL
 
+    # Apply database migrations when the API starts (Postgres only).
+    migrate_on_start: bool = True
+
     # Unpaid checkouts release their reserved stock after this long.
     checkout_expiry_minutes: int = 60
+
+    # Error alerts (https://sentry.io). Off when blank.
+    sentry_dsn: str | None = None
+    environment: str = "production"  # set "development" on your own computer
 
     # Single orders without payment (POST /orders). Off in production.
     allow_unpaid_orders: bool = False
@@ -50,6 +59,15 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, value: str) -> str:
+        """Accept Render's URL as-is (postgres:// or postgresql://)."""
+        for prefix in ("postgres://", "postgresql://"):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix):]
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -62,7 +80,8 @@ class Settings(BaseSettings):
 
     @property
     def frontend_base(self) -> str:
-        return self.frontend_url.rstrip("/")
+        base = self.frontend_url or (self.cors_origin_list[0] if self.cors_origin_list else "")
+        return base.rstrip("/")
 
 
 settings = Settings()

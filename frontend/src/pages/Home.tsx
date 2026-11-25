@@ -4,7 +4,7 @@ import * as api from "../api/endpoints";
 import { Icon, VerifiedMark } from "../components/Icon";
 import { Marketplace } from "../components/Marketplace";
 import { ProductThumb } from "../components/ProductThumb";
-import { SERVICE_AREA } from "../config";
+import { useSiteSettings } from "../settings/siteSettings";
 import { naira } from "../lib/format";
 import { useApi } from "../lib/useApi";
 import { useReveal } from "../lib/useReveal";
@@ -84,10 +84,10 @@ const PROMISES = [
   },
 ];
 
-const FAQS = [
+const faqs = (area: string) => [
   {
     q: "Where is FieldBasket available?",
-    a: `FieldBasket connects buyers and verified farms across ${SERVICE_AREA}.`,
+    a: `FieldBasket connects buyers and verified farms across ${area}.`,
   },
   {
     q: "How do I know a farm is real?",
@@ -116,6 +116,7 @@ const FAQS = [
 ];
 
 export default function Home() {
+  const { service_area: area } = useSiteSettings();
   const reveal = useReveal<HTMLElement>();
   const revealHow = useReveal<HTMLElement>();
   const revealFarmers = useReveal<HTMLElement>();
@@ -129,7 +130,7 @@ export default function Home() {
         <div className="hero__inner">
           <div className="hero__copy">
             <span className="hero__place">
-              <span className="dot dot--lime" aria-hidden="true" /> Across {SERVICE_AREA}
+              <span className="dot dot--lime" aria-hidden="true" /> Across {area}
             </span>
             <h1 className="hero__title">Fresh food, straight from Ekiti farmers.</h1>
             <p className="hero__lead">
@@ -208,7 +209,7 @@ export default function Home() {
           <div className="farmers__copy">
             <span className="eyebrow eyebrow--lime">For farmers</span>
             <h2 className="display-2">Sell your harvest without the middleman.</h2>
-            <p className="farmers__lead">Reach buyers across {SERVICE_AREA} directly, set your own prices and decide which orders to take.</p>
+            <p className="farmers__lead">Reach buyers across {area} directly, set your own prices and decide which orders to take.</p>
             <ul className="check-list">
               <li><Icon name="check" size={20} strokeWidth={2} /> List produce in minutes, with photos from your phone</li>
               <li><Icon name="check" size={20} strokeWidth={2} /> Accept the orders that suit you, decline others with a reason</li>
@@ -271,7 +272,7 @@ export default function Home() {
         <div className="container container--narrow">
           <h2 className="display-2">Questions</h2>
           <div className="faq">
-            {FAQS.map((item) => (
+            {faqs(area).map((item) => (
               <details key={item.q}>
                 <summary>
                   {item.q}

@@ -45,3 +45,4 @@ websockets==17.3
 cloudinary==1.46.3
 Pillow==13.0.0
 python-multipart==0.0.33
+sentry-sdk==3.0.1

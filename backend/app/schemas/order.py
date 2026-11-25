@@ -189,6 +189,12 @@ class OrderResponse(BaseModel):
     rejection_reason: str | None
     status: OrderStatus
     payment_status: str
+    delivery_stage: str | None = None
+    commission_percent: Decimal = Decimal("0")
+    farmer_amount: Decimal | None = None
+    farm_phone: str | None = None
+    farm_town: str | None = None
+    farm_address: str | None = None
     buyer_phone: str | None = None
     delivery_zone_name: str | None = None
     checkout_reference: str | None = None

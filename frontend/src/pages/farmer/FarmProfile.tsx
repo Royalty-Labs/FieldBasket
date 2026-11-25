@@ -58,6 +58,71 @@ function ProfileForm({ profile, onSaved }: { profile: FarmerProfile | null; onSa
   );
 }
 
+function BankForm({ profile, onSaved }: { profile: FarmerProfile; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    bank_name: profile.bank_name ?? "",
+    account_number: profile.account_number ?? "",
+    account_name: profile.account_name ?? "",
+  });
+  const [editing, setEditing] = useState(!profile.account_number);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await api.saveBankDetails({
+        bank_name: form.bank_name.trim(),
+        account_number: form.account_number.replace(/\s/g, ""),
+        account_name: form.account_name.trim(),
+      });
+      setSaved(true);
+      setEditing(false);
+      onSaved();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="bank" aria-labelledby="bank-title">
+      <h2 id="bank-title" className="section-title">
+        <Icon name="bank" size={18} /> Payout account
+      </h2>
+      <p className="muted small">Where FieldBasket sends the money for your delivered orders.</p>
+      {!editing ? (
+        <div className="bank__summary">
+          <div>
+            <span className="bank__name">{profile.account_name}</span>
+            <span className="muted small">
+              {profile.bank_name} · ••••{profile.account_number?.slice(-4)}
+            </span>
+          </div>
+          <button type="button" className="btn btn--outline btn--sm" onClick={() => setEditing(true)}>
+            Change
+          </button>
+        </div>
+      ) : (
+        <form className="form" onSubmit={handleSubmit}>
+          <TextField id="bank" label="Bank" required minLength={2} maxLength={100} placeholder="e.g. GTBank, Opay, Access Bank" value={form.bank_name} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} />
+          <TextField id="account" label="Account number" required inputMode="numeric" autoComplete="off" pattern={"[0-9 ]{10,13}"} maxLength={13} hint="10 digits (NUBAN)." value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
+          <TextField id="account-name" label="Account name" required minLength={2} maxLength={150} hint="Exactly as your bank shows it." value={form.account_name} onChange={(e) => setForm({ ...form, account_name: e.target.value })} />
+          {error && <Notice tone="error">{error}</Notice>}
+          <button className="btn btn--ink btn--block" disabled={busy}>
+            {busy ? "Saving…" : "Save payout account"}
+          </button>
+        </form>
+      )}
+      {saved && !editing && <Notice tone="success">Payout account saved.</Notice>}
+    </section>
+  );
+}
+
 export default function FarmProfile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -96,6 +161,7 @@ export default function FarmProfile() {
           </Notice>
         )}
         <ProfileForm profile={profile} onSaved={reload} />
+        {profile && <BankForm key={profile.bank_updated_at ?? "none"} profile={profile} onSaved={reload} />}
 
         <div className="account-strip">
           <span className="muted small">Signed in as {user?.email}</span>

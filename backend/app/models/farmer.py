@@ -32,6 +32,12 @@ class FarmerProfile(Base):
     town: Mapped[str] = mapped_column(String(100), nullable=False)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Where FieldBasket sends this farm's payouts.
+    bank_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    account_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    account_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    bank_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     verification_status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

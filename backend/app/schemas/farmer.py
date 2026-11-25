@@ -76,5 +76,9 @@ class FarmerProfileResponse(BaseModel):
     address: str | None
     verification_status: Literal["pending", "approved", "rejected"]
     rejection_reason: str | None
+    bank_name: str | None = None
+    account_number: str | None = None
+    account_name: str | None = None
+    bank_updated_at: datetime | None = None
     created_at: datetime
     updated_at: datetime

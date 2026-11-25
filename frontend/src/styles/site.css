@@ -2187,3 +2187,521 @@ td .pay-badge {
     animation: none;
   }
 }
+
+/* ---------- Shared small helpers ---------- */
+
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.95em;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 28px 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.card__sub--pad {
+  padding: 0 16px 14px;
+}
+
+.site-footer__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.print-only {
+  display: none;
+}
+
+/* ---------- Admin: dashboard ---------- */
+
+.admin__section-title {
+  margin: 28px 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin__hint {
+  margin: -4px 0 14px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.admin__foot {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tiles .tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tiles .tile--link:hover {
+  border-color: var(--ink-line-strong);
+}
+
+.tiles .tile--alert {
+  border-color: var(--amber);
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+.tile__label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tile__value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.setup {
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.setup__title {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.setup__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.setup__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.setup__item:first-child {
+  border-top: 0;
+}
+
+.setup__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--field-line);
+  border-radius: 50%;
+}
+
+.setup__item.is-done .setup__mark {
+  border-color: var(--green);
+  background: var(--green);
+  color: #ffffff;
+}
+
+.setup__item.is-done .setup__label {
+  color: var(--muted);
+}
+
+.setup__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.setup__label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.setup__how {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rev-chart {
+  position: relative;
+  margin: 0;
+}
+
+.rev-chart__readout {
+  min-height: 20px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rev-chart__readout strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rev-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.rev-chart__bar {
+  fill: var(--green);
+  opacity: 0.85;
+}
+
+.rev-chart__bar.is-active {
+  opacity: 1;
+  fill: var(--green-dark);
+}
+
+.rev-chart__axis {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.rev-chart__tick {
+  font-size: 11px;
+  fill: var(--muted);
+}
+
+/* ---------- Admin: settings ---------- */
+
+.settings__row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: end;
+  gap: 20px;
+}
+
+.settings__example {
+  padding-bottom: 12px;
+  font-size: 14px;
+  color: var(--muted-strong);
+}
+
+.settings__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px 20px;
+}
+
+.settings__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.settings .notice {
+  margin-bottom: 12px;
+}
+
+/* ---------- Admin: dispatch ---------- */
+
+.dispatch {
+  margin-bottom: 24px;
+}
+
+.dispatch__area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dispatch__count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.dispatch__list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.dispatch__item {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr auto;
+  gap: 16px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 14px;
+}
+
+.dispatch__item:first-child {
+  border-top: 0;
+}
+
+.dispatch__item--preparing {
+  background: var(--mist);
+}
+
+.dispatch__what,
+.dispatch__leg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dispatch__product,
+.dispatch__name {
+  font-weight: 600;
+}
+
+.dispatch__leg-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+
+.dispatch__stage {
+  width: fit-content;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--mist);
+  color: var(--muted-strong);
+}
+
+.dispatch__stage--ready {
+  background: #fbefd9;
+  color: var(--amber-text);
+}
+
+.dispatch__stage--picked_up,
+.dispatch__stage--out_for_delivery {
+  background: #e3f2e9;
+  color: var(--green-dark);
+}
+
+.dispatch__ref {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dispatch__note {
+  color: var(--muted-strong);
+  font-style: italic;
+}
+
+.dispatch__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+}
+
+@media (max-width: 1000px) {
+  .dispatch__item {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dispatch__actions {
+    flex-direction: row;
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- Admin: payouts ---------- */
+
+.payout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.payout__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.payout__farm {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.payout__sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.payout__amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.payout__amount > span:first-child {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.payout__bank {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--mist);
+}
+
+.payout__bank dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.payout__bank dd {
+  font-weight: 600;
+}
+
+.payout__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .payout__form {
+    grid-template-columns: 1fr;
+  }
+  .settings__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Farmer: payout account and earnings ---------- */
+
+.bank {
+  margin-top: 8px;
+}
+
+.bank .form {
+  margin-top: 12px;
+}
+
+.bank__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.bank__summary > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.bank__name {
+  font-weight: 600;
+}
+
+.earn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.earn-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.earn-grid dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.earn-grid dd {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Printing the delivery sheet ---------- */
+
+@media print {
+  .admin__side,
+  .no-print,
+  .app-banners,
+  .toasts {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  .admin,
+  .admin__main {
+    display: block;
+    background: #ffffff;
+    padding: 0;
+  }
+  .dispatch__item {
+    grid-template-columns: 1.1fr 1fr 1fr;
+    break-inside: avoid;
+  }
+  .dispatch__list {
+    border-color: #999999;
+  }
+  .dispatch__printed {
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+}

@@ -48,6 +48,9 @@ export function FarmerOrderCard({ order, onChanged }: { order: Order; onChanged:
         </div>
         <div className="card__aside">
           <span className="card__amount">{naira(order.total_price)}</span>
+          {Number(order.commission_percent) > 0 && order.farmer_amount != null && (
+            <span className="card__sub">You get {naira(order.farmer_amount)}</span>
+          )}
           <PaymentBadge order={order} />
           <span className="card__sub">{timeAgo(order.created_at)}</span>
         </div>
@@ -92,6 +95,16 @@ export function FarmerOrderCard({ order, onChanged }: { order: Order; onChanged:
             </button>
           </div>
         </div>
+      )}
+
+      {order.status === "ready_for_fulfillment" && order.checkout_reference && (
+        <p className="card__sub card__sub--pad">
+          {order.delivery_stage === "out_for_delivery"
+            ? "On the way to the buyer."
+            : order.delivery_stage === "picked_up"
+              ? "Collected by the FieldBasket rider."
+              : "A FieldBasket rider will collect it from you."}
+        </p>
       )}
 
       {order.status === "accepted" && (

@@ -1,6 +1,11 @@
 import { ApiError, apiRequest, uploadProductImage } from "./client";
 import type {
   AdminFarmerProfile,
+  AdminOverview,
+  AdminSettings,
+  Earnings,
+  Payout,
+  PayoutDue,
   AuthResponse,
   CheckoutStart,
   DeliveryZone,
@@ -166,3 +171,20 @@ export const updateDeliveryZone = (id: string, data: Partial<DeliveryZoneData>) 
   apiRequest<DeliveryZone>(`/admin/delivery-zones/${id}`, json("PATCH", data));
 export const deleteDeliveryZone = (id: string) =>
   apiRequest<void>(`/admin/delivery-zones/${id}`, { method: "DELETE" });
+
+// Settings, dashboard, dispatch, payouts
+export const getAdminSettings = () => apiRequest<AdminSettings>("/admin/settings");
+export const updateAdminSettings = (data: Partial<Omit<AdminSettings, "updated_at">>) =>
+  apiRequest<AdminSettings>("/admin/settings", json("PATCH", data));
+export const getAdminOverview = () => apiRequest<AdminOverview>("/admin/overview");
+export const listDispatch = () => apiRequest<Order[]>("/admin/dispatch");
+export const setDeliveryStage = (orderId: string, stage: "picked_up" | "out_for_delivery" | "delivered") =>
+  apiRequest<Order>(`/admin/orders/${orderId}/delivery`, json("PATCH", { stage }));
+export const listPayoutsDue = () => apiRequest<PayoutDue[]>("/admin/payouts/due");
+export const listPayouts = () => apiRequest<Payout[]>("/admin/payouts");
+export const recordPayout = (data: { farmer_id: string; transfer_reference: string; note?: string | null }) =>
+  apiRequest<Payout>("/admin/payouts", json("POST", data));
+
+export const saveBankDetails = (data: { bank_name: string; account_number: string; account_name: string }) =>
+  apiRequest<FarmerProfile>("/farmers/me/bank", json("PUT", data));
+export const getMyEarnings = () => apiRequest<Earnings>("/farmers/me/earnings");

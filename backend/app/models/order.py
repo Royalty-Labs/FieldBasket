@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import (
     CheckConstraint,
@@ -37,6 +37,10 @@ class Order(Base):
             "status IN ('pending', 'accepted', 'rejected', "
             "'ready_for_fulfillment', 'completed', 'cancelled')",
             name="ck_order_status_valid",
+        ),
+        CheckConstraint(
+            "delivery_stage IS NULL OR delivery_stage IN ('picked_up', 'out_for_delivery', 'delivered')",
+            name="ck_order_delivery_stage_valid",
         ),
         CheckConstraint(
             "payment_status IN ('not_required', 'awaiting', 'paid', "
@@ -133,6 +137,21 @@ class Order(Base):
         String(30),
         nullable=True,
     )
+    # FieldBasket's share of total_price, fixed when the order was paid.
+    commission_percent: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2),
+        nullable=False,
+        default=Decimal("0"),
+        server_default="0",
+    )
+    # Delivery progress once the farm has the order ready.
+    delivery_stage: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    payout_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("payouts.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -175,3 +194,32 @@ class Order(Base):
     def visible_to_farmer(self) -> bool:
         """Farmers only see orders that were paid in time (or need no payment)."""
         return self.checkout is None or self.checkout.status == "paid"
+
+    @property
+    def commission_amount(self) -> Decimal:
+        return (self.total_price * self.commission_percent / Decimal("100")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+    @property
+    def farmer_amount(self) -> Decimal:
+        """What the farm receives for this order."""
+        return self.total_price - self.commission_amount
+
+    def _farm(self):
+        return self.farmer.farmer_profile if self.farmer else None
+
+    @property
+    def farm_phone(self) -> str | None:
+        farm = self._farm()
+        return farm.phone if farm else None
+
+    @property
+    def farm_town(self) -> str | None:
+        farm = self._farm()
+        return farm.town if farm else None
+
+    @property
+    def farm_address(self) -> str | None:
+        farm = self._farm()
+        return farm.address if farm else None

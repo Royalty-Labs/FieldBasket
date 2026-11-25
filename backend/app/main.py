@@ -13,12 +13,32 @@ from app.api.routes.orders import router as orders_router
 from app.api.routes.payments import router as payments_router
 from app.api.routes.delivery import router as delivery_router
 from app.api.routes.admin_ops import router as admin_ops_router
+from app.api.routes.operations import router as operations_router
 from app.core.config import settings
+from app.db.migrate import upgrade_database
 from app.db.session import SessionLocal
 from app.services.checkout_flow import expire_stale_checkouts
 from app.services.email import send_all
 
 logger = logging.getLogger(__name__)
+
+if settings.environment == "production" and any(
+    host in settings.frontend_base for host in ("localhost", "127.0.0.1")
+) or not settings.frontend_base:
+    logger.warning(
+        "FRONTEND_URL/CORS_ORIGINS point at %r: email links and payment returns won't reach buyers.",
+        settings.frontend_base,
+    )
+
+if settings.sentry_dsn:
+    # Imported only when used, so the app runs without the package too.
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        traces_sample_rate=0.0,
+    )
 
 
 def _sweep_checkouts() -> None:
@@ -40,6 +60,7 @@ async def _checkout_sweeper() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    await asyncio.to_thread(upgrade_database)
     task = asyncio.create_task(_checkout_sweeper())
     try:
         yield
@@ -70,6 +91,7 @@ app.include_router(payments_router)
 app.include_router(delivery_router)
 app.include_router(admin_router)
 app.include_router(admin_ops_router)
+app.include_router(operations_router)
 
 
 @app.get("/", tags=["Health"])

@@ -21,6 +21,7 @@ from app.schemas.order import (
 )
 
 from app.services import checkout_flow, messages, payments
+from app.services.platform import get_platform_settings
 from app.services.email import Email, send_all
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -212,6 +213,7 @@ def checkout(
 
     orders: list[Order] = []
     now = datetime.now(timezone.utc)
+    commission = get_platform_settings(db).commission_percent
 
     try:
         for item in data.items:
@@ -266,6 +268,7 @@ def checkout(
                     buyer_phone=data.buyer_phone,
                     status="pending",
                     payment_status="awaiting",
+                    commission_percent=commission,
                 )
             )
 

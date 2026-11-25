@@ -1,8 +1,14 @@
 import type { Product } from "../types";
 
+// Set VITE_API_BASE_URL in the hosting dashboard. The local address is used
+// only by `npm run dev`; a production build without it fails loudly.
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8001"
+  import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://127.0.0.1:8001" : "")
 ).replace(/\/$/, "");
+
+if (!API_BASE_URL) {
+  console.error("FieldBasket: VITE_API_BASE_URL is not set, so the website can't reach the API.");
+}
 
 export class ApiError extends Error {
   status: number;

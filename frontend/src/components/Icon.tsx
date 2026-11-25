@@ -59,6 +59,13 @@ const PATHS = {
   arrowRight: <path d="M5 12h14M13 6l6 6-6 6" />,
   check: <path d="M5 12l5 5L20 7" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
+  settings: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1" />
+    </>
+  ),
+  bank: <path d="M3 10h18M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M12 3l9 5H3z" />,
   truck: (
     <>
       <path d="M3 6h11v10H3zM14 10h4l3 3v3h-7" />

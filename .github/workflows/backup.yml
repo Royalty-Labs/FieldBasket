@@ -1,0 +1,53 @@
+name: Nightly database backup
+
+# Dumps the production database every night, encrypts it with your
+# passphrase and keeps it as a downloadable artifact for 14 days.
+# Needs two repository secrets: DATABASE_BACKUP_URL (Render's External
+# Database URL) and BACKUP_PASSPHRASE. Without them it skips quietly.
+
+on:
+  schedule:
+    - cron: "17 1 * * *" # 02:17 in Lagos
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_BACKUP_URL: ${{ secrets.DATABASE_BACKUP_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check secrets
+        id: check
+        run: |
+          if [ -z "$DATABASE_BACKUP_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "Backup secrets are not set; skipping."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dump and encrypt
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          stamp=$(date -u +%Y-%m-%d)
+          docker run --rm -e DATABASE_BACKUP_URL postgres:17 \
+            sh -c 'pg_dump --no-owner --no-privileges --format=custom "$DATABASE_BACKUP_URL"' > fieldbasket.dump
+          test -s fieldbasket.dump
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
+            --symmetric --cipher-algo AES256 -o "fieldbasket-$stamp.dump.gpg" fieldbasket.dump
+          rm fieldbasket.dump
+          ls -lh fieldbasket-*.dump.gpg
+
+      - name: Keep for 14 days
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fieldbasket-db-backup
+          path: fieldbasket-*.dump.gpg
+          retention-days: 14
+          if-no-files-found: error

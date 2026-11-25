@@ -1743,5 +1743,6 @@ button:disabled {
   background: transparent;
   padding: 0;
   cursor: pointer;
-  font: inherit;
+  /* Keep the nav's 11px label size; only take the page's typeface. */
+  font-family: inherit;
 }

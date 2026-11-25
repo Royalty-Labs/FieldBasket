@@ -4,9 +4,13 @@ import { Icon, type IconName } from "../components/Icon";
 import { Logo } from "../components/Logo";
 
 const LINKS: { to: string; label: string; icon: IconName; end?: boolean }[] = [
-  { to: "/admin", label: "Farmer applications", icon: "farm", end: true },
+  { to: "/admin", label: "Today", icon: "chart", end: true },
+  { to: "/admin/dispatch", label: "Dispatch", icon: "truck" },
   { to: "/admin/orders", label: "Orders & refunds", icon: "receipt" },
-  { to: "/admin/delivery", label: "Delivery areas", icon: "truck" },
+  { to: "/admin/payouts", label: "Payouts", icon: "wallet" },
+  { to: "/admin/farms", label: "Farm applications", icon: "farm" },
+  { to: "/admin/delivery", label: "Delivery areas", icon: "pin" },
+  { to: "/admin/settings", label: "Settings", icon: "settings" },
 ];
 
 export function AdminShell() {

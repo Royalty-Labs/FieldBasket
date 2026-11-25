@@ -5,7 +5,11 @@ const STEPS: { label: string; reached: (order: Order) => boolean }[] = [
   { label: "Order placed", reached: () => true },
   { label: "Accepted by the farm", reached: (o) => ["accepted", "ready_for_fulfillment", "completed"].includes(o.status) },
   { label: "Ready for delivery", reached: (o) => ["ready_for_fulfillment", "completed"].includes(o.status) },
-  { label: "Received", reached: (o) => o.status === "completed" },
+  {
+    label: "On the way",
+    reached: (o) => o.status === "completed" || o.delivery_stage === "out_for_delivery" || o.delivery_stage === "picked_up",
+  },
+  { label: "Delivered", reached: (o) => o.status === "completed" },
 ];
 
 /** Step-by-step progress for an order that is still moving. */

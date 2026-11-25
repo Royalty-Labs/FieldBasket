@@ -46,6 +46,7 @@ const FARMER_NAV: NavItem[] = [
   { to: "/farm", label: "Overview", icon: "chart", end: true },
   { to: "/farm/orders", label: "Orders", icon: "receipt" },
   { to: "/farm/listings", label: "Listings", icon: "listings" },
+  { to: "/farm/earnings", label: "Earnings", icon: "wallet" },
   { to: "/farm/profile", label: "Farm", icon: "farm" },
 ];
 

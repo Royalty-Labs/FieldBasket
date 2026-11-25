@@ -5,7 +5,7 @@ import { useAuth } from "../auth/useAuth";
 import { useBasket } from "../basket/useBasket";
 import { Icon, type IconName } from "../components/Icon";
 import { Logo } from "../components/Logo";
-import { CONTACT_EMAIL, SERVICE_AREA } from "../config";
+import { telLink, useSiteSettings, whatsappLink } from "../settings/siteSettings";
 import { useUi } from "../ui/uiContext";
 
 /** Scroll to #section links, or to the top on a new page. */
@@ -99,13 +99,22 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
+  const site = useSiteSettings();
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
         <div className="site-footer__brand">
           <Logo />
-          <p>Fresh food, straight from verified farms across {SERVICE_AREA}.</p>
-          {CONTACT_EMAIL && <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>}
+          <p>Fresh food, straight from verified farms across {site.service_area}.</p>
+          <div className="site-footer__contact">
+            {site.support_email && <a href={`mailto:${site.support_email}`}>{site.support_email}</a>}
+            {site.support_phone && <a href={telLink(site.support_phone)}>{site.support_phone}</a>}
+            {site.support_whatsapp && (
+              <a href={whatsappLink(site.support_whatsapp)} target="_blank" rel="noreferrer">
+                WhatsApp {site.support_whatsapp}
+              </a>
+            )}
+          </div>
         </div>
         <nav className="site-footer__nav" aria-label="Footer">
           <div>
@@ -127,7 +136,8 @@ function SiteFooter() {
         </nav>
       </div>
       <div className="site-footer__legal">
-        © {new Date().getFullYear()} FieldBasket · A Royalty-Labs product · {SERVICE_AREA}, Nigeria
+        © {new Date().getFullYear()} FieldBasket
+        {site.operator_name ? ` · Operated by ${site.operator_name}` : ""} · {site.service_area}, Nigeria
       </div>
     </footer>
   );

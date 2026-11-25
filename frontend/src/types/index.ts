@@ -22,6 +22,10 @@ export type FarmerProfile = {
   address: string | null;
   verification_status: VerificationStatus;
   rejection_reason: string | null;
+  bank_name: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  bank_updated_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -112,6 +116,12 @@ export type Order = {
   rejection_reason: string | null;
   status: OrderStatus;
   payment_status: PaymentStatus;
+  delivery_stage: "picked_up" | "out_for_delivery" | "delivered" | null;
+  commission_percent: number | string;
+  farmer_amount: number | string | null;
+  farm_phone: string | null;
+  farm_town: string | null;
+  farm_address: string | null;
   buyer_phone: string | null;
   delivery_zone_name: string | null;
   checkout_reference: string | null;
@@ -119,4 +129,78 @@ export type Order = {
   farm_name: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type AdminSettings = {
+  commission_percent: number | string;
+  service_area: string;
+  operator_name: string | null;
+  support_email: string | null;
+  support_phone: string | null;
+  support_whatsapp: string | null;
+  updated_at: string;
+};
+
+export type Payout = {
+  id: string;
+  farmer_id: string;
+  farm_name: string | null;
+  amount: number | string;
+  gross_amount: number | string;
+  commission_amount: number | string;
+  order_count: number;
+  bank_name: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  transfer_reference: string;
+  note: string | null;
+  created_at: string;
+};
+
+export type PayoutDue = {
+  farmer_id: string;
+  farm_name: string;
+  farmer_name: string;
+  phone: string;
+  bank_name: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  bank_updated_at: string | null;
+  order_count: number;
+  gross_amount: number | string;
+  commission_amount: number | string;
+  amount: number | string;
+  oldest_delivered_at: string;
+};
+
+export type Earnings = {
+  commission_percent: number | string;
+  owed: number | string;
+  owed_orders: number;
+  in_progress: number | string;
+  in_progress_orders: number;
+  paid_out: number | string;
+  payouts: Payout[];
+  has_bank_details: boolean;
+};
+
+export type AdminOverview = {
+  orders_today: number;
+  revenue_today: number | string;
+  revenue_7_days: number | string;
+  revenue_30_days: number | string;
+  commission_30_days: number | string;
+  farms_pending: number;
+  farms_approved: number;
+  refunds_due: number;
+  awaiting_farm: number;
+  ready_for_pickup: number;
+  on_the_way: number;
+  payouts_owed: number | string;
+  payouts_owed_farms: number;
+  live_listings: number;
+  buyers: number;
+  daily: { day: string; amount: number | string; orders: number }[];
+  commission_percent: number | string;
+  setup: Record<"payments" | "email" | "delivery_areas" | "commission" | "support_contact" | "operator_name" | "error_alerts", boolean>;
 };

@@ -95,7 +95,7 @@ def admin_new_application(to: str, farm_name: str, owner: str, town: str, phone:
         lines=[f"{owner} applied to sell as {farm_name} ({town}). Phone: {phone}.",
                "Please review the details and call the farmer before approving."],
         action_label="Review applications",
-        action_url=url("/admin"),
+        action_url=url("/admin/farms"),
     )
 
 
@@ -119,3 +119,25 @@ def password_reset(to: str, name: str, link: str) -> Email:
         action_label="Choose a new password",
         action_url=link,
     )
+
+
+def buyer_on_the_way(to: str, buyer_name: str, product: str, amount: str, phone: str | None) -> Email:
+    lines = [f"Hello {buyer_name},", f"Your {product} ({amount}) is on its way to you now."]
+    if phone:
+        lines.append(f"Our rider will call {phone} if they need directions.")
+    return Email(to=to, subject=f"Your {product} is on its way", lines=lines,
+                 action_label="Follow your order", action_url=url("/orders"))
+
+
+def farmer_payout(to: str, farmer_name: str, amount: Decimal, order_count: int, bank: str | None,
+                  account: str | None, reference: str) -> Email:
+    ending = f" ending {account[-4:]}" if account else ""
+    lines = [
+        f"Hello {farmer_name},",
+        f"We've sent {naira(amount)} to your {bank or 'bank'} account{ending} for {order_count} delivered "
+        f"{'order' if order_count == 1 else 'orders'}.",
+        f"Transfer reference: {reference}",
+        "Banks usually show transfers within a few hours.",
+    ]
+    return Email(to=to, subject=f"Payout sent: {naira(amount)}", lines=lines,
+                 action_label="See your earnings", action_url=url("/farm/earnings"))

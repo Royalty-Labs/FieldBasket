@@ -9,7 +9,11 @@ import { LegacyProductRedirect } from "./layouts/LegacyProductRedirect";
 import { SiteShell } from "./layouts/SiteShell";
 import Account from "./pages/Account";
 import { AdminShell } from "./layouts/AdminShell";
+import AdminHome from "./pages/admin/AdminHome";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminSettings from "./pages/admin/AdminSettings";
+import Dispatch from "./pages/admin/Dispatch";
+import Payouts from "./pages/admin/Payouts";
 import Applications from "./pages/admin/Applications";
 import DeliveryAreas from "./pages/admin/DeliveryAreas";
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from "./pages/AuthPages";
@@ -20,6 +24,7 @@ import Orders from "./pages/buyer/Orders";
 import ProductDetail from "./pages/buyer/ProductDetail";
 import Shop from "./pages/buyer/Shop";
 import EditListing from "./pages/farmer/EditListing";
+import Earnings from "./pages/farmer/Earnings";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
 import FarmProfile from "./pages/farmer/FarmProfile";
 import Listings from "./pages/farmer/Listings";
@@ -64,11 +69,16 @@ createRoot(document.getElementById("root")!).render(
               <Route index element={<Overview />} />
               <Route path="orders" element={<FarmerOrders />} />
               <Route path="listings" element={<Listings />} />
+              <Route path="earnings" element={<Earnings />} />
               <Route path="profile" element={<FarmProfile />} />
             </Route>
 
             <Route path="admin" element={<RequireRole role="admin"><AdminShell /></RequireRole>}>
-              <Route index element={<Applications />} />
+              <Route index element={<AdminHome />} />
+              <Route path="farms" element={<Applications />} />
+              <Route path="dispatch" element={<Dispatch />} />
+              <Route path="payouts" element={<Payouts />} />
+              <Route path="settings" element={<AdminSettings />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="delivery" element={<DeliveryAreas />} />
             </Route>

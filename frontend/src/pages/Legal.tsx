@@ -1,12 +1,21 @@
 import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router";
-import { CONTACT_EMAIL, SERVICE_AREA } from "../config";
+import { telLink, useSiteSettings } from "../settings/siteSettings";
 
 /** Change this date whenever the wording below changes. */
 const UPDATED = "25 November 2026";
 
 function Contact() {
-  return CONTACT_EMAIL ? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> : <>the contact address on this website</>;
+  const site = useSiteSettings();
+  if (site.support_email) return <a href={`mailto:${site.support_email}`}>{site.support_email}</a>;
+  if (site.support_phone) return <a href={telLink(site.support_phone)}>{site.support_phone}</a>;
+  return <>the contact details at the foot of this page</>;
+}
+
+/** The business that runs FieldBasket, as set by an admin. */
+function useOperator() {
+  const site = useSiteSettings();
+  return { operator: site.operator_name || "The FieldBasket team", area: site.service_area };
 }
 
 function LegalPage({ title, lead, children }: { title: string; lead: string; children: ReactNode }) {
@@ -31,14 +40,15 @@ function LegalPage({ title, lead, children }: { title: string; lead: string; chi
 }
 
 export function TermsPage() {
+  const { operator, area } = useOperator();
   return (
     <LegalPage
       title="Terms of Use"
-      lead={`These terms cover buying and selling on FieldBasket, a marketplace that connects buyers with verified farms across ${SERVICE_AREA}. By creating an account you agree to them.`}
+      lead={`These terms cover buying and selling on FieldBasket, a marketplace that connects buyers with verified farms across ${area}. By creating an account you agree to them.`}
     >
       <h2>1. Who we are</h2>
       <p>
-        FieldBasket is operated by Royalty-Labs in Nigeria. We run the website, verify farms, take payment for orders and
+        FieldBasket is operated by {operator} in Nigeria. We run the website, verify farms, take payment for orders and
         arrange delivery. Farms sell their own produce and set their own prices.
       </p>
 
@@ -121,6 +131,7 @@ export function TermsPage() {
 }
 
 export function PrivacyPage() {
+  const { operator } = useOperator();
   return (
     <LegalPage
       title="Privacy Policy"
@@ -128,7 +139,7 @@ export function PrivacyPage() {
     >
       <h2>1. Who is responsible</h2>
       <p>
-        Royalty-Labs, which operates FieldBasket, is the data controller for the personal data described here. Contact us
+        {operator}, which operates FieldBasket, is the data controller for the personal data described here. Contact us
         about your data at <Contact />.
       </p>
 
