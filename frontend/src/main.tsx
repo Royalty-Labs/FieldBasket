@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RequireRole } from "./auth/RequireRole";
+import { AppBanners } from "./components/AppBanners";
 import { BuyerShell, FarmerShell, PlainShell } from "./layouts/AppLayouts";
 import Account from "./pages/Account";
 import Applications from "./pages/admin/Applications";
@@ -23,6 +24,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <AppBanners />
         <Routes>
           <Route element={<PlainShell />}>
             <Route index element={<Welcome />} />

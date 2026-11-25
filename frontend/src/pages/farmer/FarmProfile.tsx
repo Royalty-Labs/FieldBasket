@@ -89,6 +89,12 @@ export default function FarmProfile() {
             Changes needed: {profile.rejection_reason}. Update your details below and save to send them for review again.
           </Notice>
         )}
+        {profile?.verification_status === "approved" && (
+          <Notice>
+            Changing these details sends your farm for a quick re-check. Your listings are hidden
+            from buyers until it is approved again.
+          </Notice>
+        )}
         <ProfileForm profile={profile} onSaved={reload} />
 
         <div className="account-strip">
