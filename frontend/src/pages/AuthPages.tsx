@@ -7,10 +7,19 @@ import { TextField } from "../components/Fields";
 import { Icon } from "../components/Icon";
 import { Logo } from "../components/Logo";
 import { errorMessage } from "../lib/useApi";
+import { resumePendingAdd } from "../basket/basketStore";
+import { useUi } from "../ui/uiContext";
 
 /** Only follow a ?next= path inside this app. */
 function safeNext(next: string | null): string | null {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+}
+
+function useResumeToast() {
+  const { showToast } = useUi();
+  return (item: { name: string } | null) => {
+    if (item) showToast(`${item.name} added to your basket`, { label: "View basket", to: "/basket" });
+  };
 }
 
 function AuthFrame({ title, lead, children }: { title: string; lead: string; children: React.ReactNode }) {
@@ -34,6 +43,7 @@ function AuthFrame({ title, lead, children }: { title: string; lead: string; chi
 export function LoginPage() {
   const { user, signIn } = useAuth();
   const navigate = useNavigate();
+  const announceResumedAdd = useResumeToast();
   const [params] = useSearchParams();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +58,7 @@ export function LoginPage() {
     setError(null);
     try {
       const signedIn = await signIn(form.email.trim(), form.password);
+      announceResumedAdd(resumePendingAdd(signedIn));
       navigate(safeNext(params.get("next")) ?? homePathFor(signedIn.role), { replace: true });
     } catch (err) {
       setError(errorMessage(err));
@@ -91,6 +102,7 @@ export function LoginPage() {
 export function RegisterPage() {
   const { user, signUp } = useAuth();
   const navigate = useNavigate();
+  const announceResumedAdd = useResumeToast();
   const [params] = useSearchParams();
   const [role, setRole] = useState<"buyer" | "farmer">(params.get("role") === "farmer" ? "farmer" : "buyer");
   const [form, setForm] = useState({ full_name: "", email: "", password: "" });
@@ -111,6 +123,7 @@ export function RegisterPage() {
         password: form.password,
         role,
       });
+      announceResumedAdd(resumePendingAdd(created));
       const fallback = created.role === "farmer" ? "/farm/profile" : homePathFor(created.role);
       navigate(safeNext(params.get("next")) ?? fallback, { replace: true });
     } catch (err) {

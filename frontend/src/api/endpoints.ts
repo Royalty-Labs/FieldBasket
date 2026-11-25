@@ -48,6 +48,12 @@ export const placeOrder = (data: {
   buyer_note?: string | null;
 }) => apiRequest<Order>("/orders", json("POST", data));
 
+export const checkout = (data: {
+  items: { product_id: string; quantity: string }[];
+  delivery_address: string;
+  buyer_note?: string | null;
+}) => apiRequest<Order[]>("/orders/checkout", json("POST", data));
+
 export const listMyOrders = () => apiRequest<Order[]>("/orders/mine");
 export const listFarmerOrders = () => apiRequest<Order[]>("/orders/farmer");
 

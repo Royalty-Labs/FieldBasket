@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../auth/useAuth";
 import { Icon } from "../components/Icon";
 
@@ -8,12 +8,12 @@ export default function Account() {
   if (!user) return null;
 
   return (
-    <>
-      <header className="ink-header">
-        <h1 className="ink-header__heading">Account</h1>
+    <div className="container container--narrow page-pad">
+      <header className="page-head">
+        <h1 className="display-2">Account</h1>
       </header>
-      <main className="page">
-        <dl className="details">
+      <div className="stack-lg">
+        <dl className="details details--card">
           <div>
             <dt>Name</dt>
             <dd className="details__strong">{user.full_name}</dd>
@@ -27,17 +27,24 @@ export default function Account() {
             <dd className="capitalize">{user.role}</dd>
           </div>
         </dl>
-        <button
-          className="btn btn--outline btn--block"
-          onClick={() => {
-            signOut();
-            navigate("/", { replace: true });
-          }}
-        >
-          <Icon name="logout" size={18} />
-          Sign out
-        </button>
-      </main>
-    </>
+        <div className="account-links">
+          <Link to="/orders" className="btn btn--outline">
+            <Icon name="receipt" size={18} /> My orders
+          </Link>
+          <Link to="/basket" className="btn btn--outline">
+            <Icon name="basket" size={18} /> My basket
+          </Link>
+          <button
+            className="btn btn--outline"
+            onClick={() => {
+              signOut();
+              navigate("/", { replace: true });
+            }}
+          >
+            <Icon name="logout" size={18} /> Sign out
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

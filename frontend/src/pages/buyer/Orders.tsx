@@ -9,7 +9,7 @@ import type { Order } from "../../types";
 
 export default function Orders() {
   const location = useLocation();
-  const justPlaced = Boolean((location.state as { placed?: boolean } | null)?.placed);
+  const placed = (location.state as { placed?: number | boolean } | null)?.placed;
   const [tab, setTab] = useState<"active" | "past">("active");
   const load = useCallback(() => api.listMyOrders(), []);
   const { data: orders, error, loading, reload } = useApi(load);
@@ -34,10 +34,10 @@ export default function Orders() {
   }
 
   return (
-    <>
-      <header className="ink-header">
-        <h1 className="ink-header__heading">Orders</h1>
-        <div className="segmented segmented--dark" role="tablist" aria-label="Order filter">
+      <div className="container container--narrow page-pad">
+      <header className="page-head">
+        <h1 className="display-2">Orders</h1>
+        <div className="segmented page-head__tabs" role="tablist" aria-label="Order filter">
           <button role="tab" aria-selected={tab === "active"} className={`segmented__option${tab === "active" ? " is-active" : ""}`} onClick={() => setTab("active")}>
             In progress{active.length ? ` · ${active.length}` : ""}
           </button>
@@ -47,8 +47,14 @@ export default function Orders() {
         </div>
       </header>
 
-      <main className="page">
-        {justPlaced && <Notice tone="success">Order placed. The farmer will accept it shortly.</Notice>}
+      <div className="stack-lg">
+        {placed && (
+          <Notice tone="success">
+            {typeof placed === "number" && placed > 1
+              ? `Your basket was sent as ${placed} orders. Each farm will confirm its part shortly.`
+              : "Order placed. The farm will confirm it shortly."}
+          </Notice>
+        )}
         {(error || actionError) && <Notice tone="error">{error ?? actionError}</Notice>}
 
         {loading && !orders ? (
@@ -122,7 +128,7 @@ export default function Orders() {
             ))}
           </ul>
         )}
-      </main>
-    </>
+      </div>
+    </div>
   );
 }

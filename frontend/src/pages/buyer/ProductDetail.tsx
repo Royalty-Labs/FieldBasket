@@ -1,116 +1,88 @@
-import { useCallback, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useCallback, useState } from "react";
+import { Link, useParams } from "react-router";
 import * as api from "../../api/endpoints";
-import { useAuth } from "../../auth/useAuth";
-import { EmptyState, Notice, PageLoader } from "../../components/Feedback";
-import { TextAreaField } from "../../components/Fields";
+import { useAddToBasket } from "../../basket/useAddToBasket";
+import { useBasket } from "../../basket/useBasket";
+import { EmptyState, PageLoader } from "../../components/Feedback";
 import { Icon, VerifiedMark } from "../../components/Icon";
 import { ProductThumb } from "../../components/ProductThumb";
 import { dateTime, naira, quantity } from "../../lib/format";
-import { errorMessage, useApi } from "../../lib/useApi";
+import { useApi } from "../../lib/useApi";
 
 export default function ProductDetail() {
   const { productId = "" } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const load = useCallback(() => api.getProduct(productId), [productId]);
   const { data: product, error, loading } = useApi(load);
-
+  const addToBasket = useAddToBasket();
+  const basket = useBasket();
   const [qty, setQty] = useState(1);
-  const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   if (loading) return <PageLoader label="Loading product" />;
 
   if (!product) {
     return (
-      <main className="page">
+      <div className="container page-pad">
         <EmptyState
           title="This listing isn't available"
           body={error ?? "It may have sold out or been removed by the farmer."}
-          action={<Link to="/shop" className="btn btn--ink">Back to the market</Link>}
+          action={<Link to="/shop" className="btn btn--ink">Back to the marketplace</Link>}
         />
-      </main>
+      </div>
     );
   }
 
-  const stock = Number(product.quantity_available);
-  const maxQty = Math.max(1, Math.floor(stock));
-  const total = Number(product.price_per_unit) * qty;
-  const canOrder = !user || user.role === "buyer";
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!product) return;
-    setBusy(true);
-    setSubmitError(null);
-    try {
-      await api.placeOrder({
-        product_id: product.id,
-        quantity: String(qty),
-        delivery_address: address.trim(),
-        buyer_note: note.trim() || null,
-      });
-      navigate("/orders", { state: { placed: true } });
-    } catch (err) {
-      setSubmitError(errorMessage(err));
-      setBusy(false);
-    }
-  }
+  const inBasket = basket.quantityOf(product.id);
+  const maxQty = Math.max(1, Math.floor(Number(product.quantity_available)) - inBasket);
+  const soldOut = Number(product.quantity_available) <= 0 || !product.is_available;
 
   return (
-    <form className="product" onSubmit={handleSubmit}>
-      <div className="product__media">
-        <ProductThumb name={product.name} imageUrl={product.image_url} className="product__img" />
-        <Link to="/shop" className="icon-button icon-button--ink product__back" aria-label="Back to the market">
-          <Icon name="chevronLeft" size={20} strokeWidth={2} />
+    <div className="container page-pad">
+      <nav className="crumbs" aria-label="Breadcrumb">
+        <Link to="/shop">
+          <Icon name="chevronLeft" size={16} strokeWidth={2} /> Marketplace
         </Link>
-      </div>
+        <span aria-hidden="true">/</span>
+        <span>{product.category}</span>
+      </nav>
 
-      <div className="page page--flush-top">
-        <div className="product__head">
-          <span className="muted small">{product.category}</span>
-          <div className="product__title-row">
-            <h1 className="product__title">{product.name}</h1>
-            <span className="product__price">
-              {naira(product.price_per_unit)}
-              <span className="muted"> / {product.unit}</span>
-            </span>
-          </div>
+      <div className="pdp">
+        <div className="pdp__media">
+          <ProductThumb name={product.name} imageUrl={product.image_url} className="pdp__img" />
         </div>
 
-        <dl className="details">
-          <div>
-            <dt>Sold by</dt>
-            <dd className="details__strong">
-              {product.farm_name ?? "Verified farm"} <VerifiedMark />
-            </dd>
-          </div>
-          <div>
-            <dt>Farm location</dt>
-            <dd>{product.location}</dd>
-          </div>
-          <div>
-            <dt>In stock</dt>
-            <dd>
-              {quantity(product.quantity_available)} {product.unit}
-            </dd>
-          </div>
-          <div>
-            <dt>Listed</dt>
-            <dd>{dateTime(product.created_at)}</dd>
-          </div>
-        </dl>
+        <div className="pdp__info">
+          <span className="pdp__farm">
+            <VerifiedMark /> {product.farm_name ?? "Verified farm"}
+          </span>
+          <h1 className="pdp__title">{product.name}</h1>
+          <p className="pdp__price">
+            {naira(product.price_per_unit)} <span className="muted">per {product.unit}</span>
+          </p>
 
-        {product.description && <p className="product__desc">{product.description}</p>}
+          {product.description && <p className="pdp__desc">{product.description}</p>}
 
-        {canOrder ? (
-          <>
-            <div className="qty-row">
-              <span className="qty-row__label">Quantity</span>
-              <div className="stepper">
+          <dl className="details">
+            <div>
+              <dt>Farm location</dt>
+              <dd>{product.location}</dd>
+            </div>
+            <div>
+              <dt>In stock</dt>
+              <dd>
+                {quantity(product.quantity_available)} {product.unit}
+              </dd>
+            </div>
+            <div>
+              <dt>Listed</dt>
+              <dd>{dateTime(product.created_at)}</dd>
+            </div>
+          </dl>
+
+          {soldOut ? (
+            <p className="notice notice--warning">Sold out for now. Check back soon.</p>
+          ) : (
+            <div className="pdp__buy">
+              <div className="stepper" role="group" aria-label="Quantity">
                 <button type="button" aria-label="Decrease quantity" onClick={() => setQty((q) => Math.max(1, q - 1))}>
                   <Icon name="minus" size={18} strokeWidth={2} />
                 </button>
@@ -121,54 +93,31 @@ export default function ProductDetail() {
                   <Icon name="plus" size={18} strokeWidth={2} />
                 </button>
               </div>
+              <button
+                type="button"
+                className="btn btn--ink btn--lg pdp__add"
+                onClick={() => {
+                  addToBasket(product, qty);
+                  setQty(1);
+                }}
+              >
+                Add to basket · {naira(Number(product.price_per_unit) * qty)}
+              </button>
             </div>
-
-            <TextAreaField
-              id="address"
-              label="Delivery address"
-              rows={2}
-              required
-              minLength={5}
-              placeholder="Street, area, town"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-            <TextAreaField
-              id="note"
-              label="Note for the farmer"
-              optional
-              rows={2}
-              placeholder="e.g. Please pick firm ones"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-            {submitError && <Notice tone="error">{submitError}</Notice>}
-          </>
-        ) : (
-          <Notice>You're signed in as a {user?.role}. Use a buyer account to place orders.</Notice>
-        )}
-      </div>
-
-      {canOrder && (
-        <div className="action-bar">
-          <div className="action-bar__total">
-            <span className="action-bar__label">Total</span>
-            <span className="action-bar__value">{naira(total)}</span>
-          </div>
-          {user ? (
-            <button className="btn btn--lime btn--grow" disabled={busy}>
-              {busy ? "Placing order…" : "Place order"}
-            </button>
-          ) : (
-            <Link
-              to={`/login?next=${encodeURIComponent(`/shop/products/${product.id}`)}`}
-              className="btn btn--lime btn--grow"
-            >
-              Sign in to order
-            </Link>
           )}
+
+          {inBasket > 0 && (
+            <p className="pdp__in-basket">
+              <Icon name="check" size={16} strokeWidth={2.2} /> {inBasket} {product.unit} in your basket.{" "}
+              <Link to="/basket">View basket</Link>
+            </p>
+          )}
+
+          <p className="pdp__assure">
+            <Icon name="shield" size={18} /> This farm was checked by our team before it could sell on FieldBasket.
+          </p>
         </div>
-      )}
-    </form>
+      </div>
+    </div>
   );
 }

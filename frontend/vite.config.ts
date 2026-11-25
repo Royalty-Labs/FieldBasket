@@ -18,7 +18,7 @@ export default defineConfig({
         background_color: '#172b22',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
+        start_url: '/shop',
         scope: '/',
         lang: 'en-NG',
         categories: ['food', 'shopping', 'business'],

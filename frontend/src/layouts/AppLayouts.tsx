@@ -42,12 +42,6 @@ function BottomNav({ items, label }: { items: NavItem[]; label: string }) {
   );
 }
 
-const BUYER_NAV: NavItem[] = [
-  { to: "/shop", label: "Shop", icon: "shop" },
-  { to: "/orders", label: "Orders", icon: "receipt" },
-  { to: "/account", label: "Account", icon: "user" },
-];
-
 const FARMER_NAV: NavItem[] = [
   { to: "/farm", label: "Overview", icon: "chart", end: true },
   { to: "/farm/orders", label: "Orders", icon: "receipt" },
@@ -60,16 +54,6 @@ export function PlainShell() {
   return (
     <div className="app-shell">
       <Outlet />
-    </div>
-  );
-}
-
-/** Marketplace browsing works signed out; orders and account need a buyer. */
-export function BuyerShell() {
-  return (
-    <div className="app-shell app-shell--nav">
-      <Outlet />
-      <BottomNav items={BUYER_NAV} label="Main" />
     </div>
   );
 }
