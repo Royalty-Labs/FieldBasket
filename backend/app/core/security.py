@@ -14,6 +14,11 @@ def hash_password(password: str) -> str:
     return password_hash.hash(password)
 
 
+# A real hash of a random value, used to keep failed sign-ins for unknown
+# emails as slow as those for known ones.
+DUMMY_PASSWORD_HASH = password_hash.hash("fieldbasket-timing-placeholder")
+
+
 def verify_password(password: str, hashed_password: str) -> bool:
     return password_hash.verify(password, hashed_password)
 

@@ -15,11 +15,10 @@ from fastapi import (
     UploadFile,
     status,
 )
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import require_role
 from app.core.config import settings
@@ -33,6 +32,32 @@ MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 
 MAX_IMAGE_PIXELS = 25_000_000
+
+
+def escape_like(value: str) -> str:
+    """Treat %, _ and \\ in user input as plain characters in LIKE queries."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def strip_image_metadata(image_bytes: bytes) -> bytes:
+    """Re-encode an image without EXIF data (camera details, GPS location).
+
+    The photo is rotated upright first, since dropping EXIF also drops
+    the orientation flag phones rely on.
+    """
+    with Image.open(BytesIO(image_bytes)) as original:
+        image_format = original.format
+        upright = ImageOps.exif_transpose(original)
+        output = BytesIO()
+
+        if image_format == "JPEG":
+            upright.convert("RGB").save(output, format="JPEG", quality=88, optimize=True)
+        elif image_format == "PNG":
+            upright.save(output, format="PNG", optimize=True)
+        else:
+            upright.save(output, format="WEBP", quality=88)
+
+        return output.getvalue()
 
 
 def get_approved_farmer_profile(
@@ -102,10 +127,14 @@ def list_public_products(
     )
 
     if category is not None:
-        query = query.where(Product.category.ilike(category.strip()))
+        query = query.where(
+            Product.category.ilike(escape_like(category.strip()), escape="\\")
+        )
 
     if search is not None:
-        query = query.where(Product.name.ilike(f"%{search.strip()}%"))
+        query = query.where(
+            Product.name.ilike(f"%{escape_like(search.strip())}%", escape="\\")
+        )
 
     query = query.order_by(Product.created_at.desc(), Product.id.asc())
     query = query.offset(skip).limit(limit)
@@ -223,7 +252,7 @@ def delete_product(
     "/{product_id}/image",
     response_model=ProductResponse,
 )
-async def upload_product_image(
+def upload_product_image(
     product_id: UUID,
     file: UploadFile = File(...),
     current_user: User = Depends(require_role("farmer")),
@@ -249,7 +278,7 @@ async def upload_product_image(
         )
 
     # Read at most 5 MB plus one byte to detect oversized files.
-    image_bytes = await file.read(MAX_IMAGE_SIZE + 1)
+    image_bytes = file.file.read(MAX_IMAGE_SIZE + 1)
 
     if not image_bytes:
         raise HTTPException(
@@ -280,6 +309,7 @@ async def upload_product_image(
             )
 
         image.verify()
+        image_bytes = strip_image_metadata(image_bytes)
 
     except HTTPException:
         raise
@@ -303,10 +333,9 @@ async def upload_product_image(
     )
 
     try:
-        upload_result = await run_in_threadpool(
-            cloudinary.uploader.upload,
+        upload_result = cloudinary.uploader.upload(
             image_bytes,
-            folder="farmlink-ekiti/products",
+            folder="fieldbasket/products",
             public_id=f"product_{product.id}",
             overwrite=True,
             invalidate=True,

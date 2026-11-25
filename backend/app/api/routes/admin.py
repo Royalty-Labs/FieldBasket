@@ -65,6 +65,7 @@ def review_farmer_profile(
 
     profile.verification_status = data.verification_status
     profile.rejection_reason = data.rejection_reason
+    profile.user.is_verified = data.verification_status == "approved"
 
     try:
         db.commit()

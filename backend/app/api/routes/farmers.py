@@ -13,6 +13,9 @@ from app.schemas.farmer import (
 )
 
 
+# Details an admin checks before approving a farm.
+REVIEWED_FIELDS = {"farm_name", "phone", "town", "address"}
+
 router = APIRouter(prefix="/farmers/me/profile", tags=["Farmer Profiles"])
 
 
@@ -102,13 +105,26 @@ def update_my_farmer_profile(
         )
 
     changes = data.model_dump(exclude_unset=True)
+    changed = {
+        field
+        for field, value in changes.items()
+        if getattr(profile, field) != value
+    }
 
     for field, value in changes.items():
         setattr(profile, field, value)
 
-    if profile.verification_status == "rejected":
+    # A rejected farm goes back for review after any edit. A verified farm
+    # goes back for review when the details an admin checked change.
+    needs_review = profile.verification_status == "rejected" or (
+        profile.verification_status == "approved"
+        and bool(changed & REVIEWED_FIELDS)
+    )
+
+    if needs_review:
         profile.verification_status = "pending"
         profile.rejection_reason = None
+        current_user.is_verified = False
 
     try:
         db.commit()

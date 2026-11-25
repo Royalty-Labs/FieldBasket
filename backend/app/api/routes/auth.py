@@ -4,7 +4,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.rate_limit import login_limiter
 from app.core.security import (
+    DUMMY_PASSWORD_HASH,
     create_access_token,
     hash_password,
     verify_password,
@@ -72,21 +74,34 @@ def login(
 ) -> TokenResponse:
     email = str(data.email).strip().lower()
 
+    retry_after = login_limiter.retry_after(email)
+    if retry_after:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed sign-in attempts. Please wait a few minutes and try again.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     user = db.scalar(
         select(User).where(User.email == email)
     )
 
-    if (
-        user is None
-        or not verify_password(data.password, user.password_hash)
-        or not user.is_active
-    ):
+    # Always run one password check so unknown emails take as long to
+    # reject as wrong passwords (no hint about which emails are registered).
+    password_ok = verify_password(
+        data.password,
+        user.password_hash if user is not None else DUMMY_PASSWORD_HASH,
+    )
+
+    if user is None or not password_ok or not user.is_active:
+        login_limiter.record_failure(email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    login_limiter.reset(email)
     token = create_access_token(user.id)
 
     return TokenResponse(
